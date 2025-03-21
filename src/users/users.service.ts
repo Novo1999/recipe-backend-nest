@@ -17,7 +17,7 @@ export class UsersService {
     }
   }
 
-  async addOne(username: string, password: string) {
+  async addOne(username: string, password: string, isChef: boolean) {
     try {
       const userExists = await this
         .sql`SELECT EXISTS(SELECT 1 FROM users WHERE username=${username})`;
@@ -29,8 +29,8 @@ export class UsersService {
       const hashedPassword = await hashPassword(password);
 
       await this.sql`
-    INSERT INTO users (username, password)
-    VALUES(${username}, ${hashedPassword})`;
+      INSERT INTO ${isChef ? 'chef_users' : 'users'} (username, password)
+      VALUES(${username}, ${hashedPassword}, ${isChef && 'Chef'})`;
 
       return {
         message: 'Added new user',

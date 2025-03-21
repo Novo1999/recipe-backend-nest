@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -22,8 +23,12 @@ export class AuthController {
   }
 
   @Post('register')
-  signUp(@Body() signUpDto: Record<string, string>) {
-    return this.authService.signUp(signUpDto.username, signUpDto.password);
+  signUp(@Body() signUpDto: Record<string, string>, @Query() query) {
+    return this.authService.signUp(
+      signUpDto.username,
+      signUpDto.password,
+      query.isChef,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
