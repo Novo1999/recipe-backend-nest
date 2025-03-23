@@ -18,12 +18,10 @@ export class UsersService {
   }
 
   async addOne(username: string, password: string, isChef: string) {
-    console.log('🚀 ~ UsersService ~ addOne ~ isChef:', isChef);
     try {
       const tableToOperate = isChef === '1' ? 'chef_users' : 'users';
       const userExists = await this
         .sql`SELECT EXISTS(SELECT 1 FROM ${this.sql(tableToOperate)} WHERE username=${username})`;
-      console.log(userExists);
 
       if (userExists[0].exists)
         throw new HttpException('User Already Exists', HttpStatus.FORBIDDEN);
