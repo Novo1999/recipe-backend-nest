@@ -23,11 +23,14 @@ export class AuthController {
   }
 
   @Post('register')
-  signUp(@Body() signUpDto: Record<string, string>, @Query() query) {
+  signUp(
+    @Body() signUpDto: Record<string, string>,
+    @Query() query: { is_chef: string },
+  ) {
     return this.authService.signUp(
       signUpDto.username,
       signUpDto.password,
-      query.isChef,
+      query.is_chef,
     );
   }
 

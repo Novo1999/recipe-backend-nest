@@ -35,7 +35,7 @@ export class AuthService {
     }
   }
 
-  async signUp(username: string, pass: string, isChef: boolean): Promise<any> {
+  async signUp(username: string, pass: string, isChef: string): Promise<any> {
     const user = await this.usersService.addOne(username, pass, isChef);
 
     return user;
