@@ -7,26 +7,41 @@ export class RecipeService {
 
   async findAllRecipes(
     query: Record<string, string>,
-  ): Promise<Recipe | undefined> {
-    const { search } = query ?? {};
-    let recipes;
+  ): Promise<Recipe[] | undefined> {
+    const { search, chef_id, labels } = query ?? {};
+    const queryParams: any[] = [];
+    let sqlQuery = 'SELECT * FROM recipes';
+
+    const conditions: string[] = [];
+
+    if (search) {
+      conditions.push(
+        `(name ILIKE $${queryParams.length + 1} OR description ILIKE $${queryParams.length + 1})`,
+      );
+      queryParams.push(`%${search}%`);
+    }
+
+    if (chef_id) {
+      conditions.push(`chef_id = $${queryParams.length + 1}`);
+      queryParams.push(chef_id);
+    }
+
+    if (labels) {
+      const labelsArray = labels.split(',').map(Number);
+      conditions.push(`labels && $${queryParams.length + 1}::int[]`);
+      queryParams.push(labelsArray);
+    }
+    console.log({ conditions, queryParams });
+
+    if (conditions.length) {
+      sqlQuery += ` WHERE ${conditions.join(' AND ')}`;
+    }
 
     try {
-      if (search) {
-        const sanitizedSearch = `%${search}%`;
-        recipes = await this.sql`
-        SELECT * FROM recipes 
-        WHERE name LIKE ${sanitizedSearch} OR description LIKE ${sanitizedSearch};
-      `;
-      } else {
-        recipes = await this.sql`
-        SELECT * FROM recipes;
-      `;
-      }
+      const recipes = await this.sql.unsafe(sqlQuery, queryParams);
       return recipes;
     } catch (error) {
-      if (error instanceof HttpException)
-        throw new HttpException(error, HttpStatus.BAD_REQUEST);
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
 }
