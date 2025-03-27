@@ -8,7 +8,7 @@ export class RecipeService {
   async findAllRecipes(
     query: Record<string, string>,
   ): Promise<Recipe[] | undefined> {
-    const { search, chef_id, labels } = query ?? {};
+    const { search, chef_id, labels, page, limit } = query ?? {};
     const queryParams: any[] = [];
     let sqlQuery = 'SELECT * FROM recipes';
 
@@ -36,7 +36,14 @@ export class RecipeService {
     if (conditions.length) {
       sqlQuery += ` WHERE ${conditions.join(' AND ')}`;
     }
+    if (limit) {
+      sqlQuery += ` LIMIT ${limit}`;
+    }
 
+    if (page) {
+      sqlQuery += ` OFFSET ${(Number(page) - 1) * 10}`;
+    }
+    console.log(sqlQuery);
     try {
       const recipes = await this.sql.unsafe(sqlQuery, queryParams);
       return recipes;
