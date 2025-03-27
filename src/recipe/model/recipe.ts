@@ -3,8 +3,9 @@ export class Recipe {
   name: string;
   description: string;
   image_url: string;
-  labels: string[]; // Categories like "Vegetarian", "Gluten-Free"
-  chefId: string; // Reference to the chef who uploaded the recipe
+  labels: string[];
+  chef_id: string;
+  cooking_time: string;
   createdAt: Date;
   updatedAt: Date;
 
@@ -23,7 +24,7 @@ export class Recipe {
     this.description = description;
     this.image_url = image_url;
     this.labels = labels;
-    this.chefId = chefId;
+    this.chef_id = chefId;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }

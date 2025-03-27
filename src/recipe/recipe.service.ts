@@ -59,10 +59,23 @@ export class RecipeService {
       sqlQuery += ` OFFSET ${(Number(page) - 1) * 10}`;
     }
 
-    console.log({ sqlQuery, conditions, queryParams });
     try {
       const recipes = await this.sql.unsafe(sqlQuery, queryParams);
       return recipes;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async addNewRecipe(recipe: Recipe) {
+    const { chef_id, cooking_time, description, image_url, labels, name } =
+      recipe ?? {};
+
+    try {
+      const newRecipe = await this.sql`
+      INSERT INTO recipes (name, description, image_url, labels, chef_id, cooking_time)
+      VALUES(${name}, ${description}, ${image_url}, ${labels}, ${chef_id}, ${cooking_time}) RETURNING *`;
+      return newRecipe;
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
