@@ -12,9 +12,10 @@ export class AuthService {
   async signIn(
     username: string,
     pass: string,
+    is_chef: boolean,
   ): Promise<{ access_token: string }> {
     try {
-      const user = await this.usersService.findOne(username);
+      const user = await this.usersService.findOne(username, is_chef);
 
       if (!user || user.length === 0)
         throw new HttpException('User Not Found', HttpStatus.NOT_FOUND);
@@ -25,7 +26,11 @@ export class AuthService {
       if (!isMatch)
         throw new HttpException('Wrong Password', HttpStatus.NOT_FOUND);
 
-      const payload = { sub: user?.[0].id, username: user?.[0].username };
+      const payload = {
+        sub: user?.[0].id,
+        username: user?.[0].username,
+        is_chef: user?.[0].role === 'Chef',
+      };
 
       return {
         access_token: await this.jwtService.signAsync(payload),

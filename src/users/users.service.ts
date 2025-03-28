@@ -6,10 +6,19 @@ import { User } from './interfaces/users.interface';
 export class UsersService {
   constructor(@Inject('POSTGRES_POOL') private readonly sql: any) {}
 
-  async findOne(username: string): Promise<User[] | undefined> {
+  async findOne(
+    username: string,
+    is_chef: boolean,
+  ): Promise<User[] | undefined> {
+    let user;
     try {
-      const user = await this.sql`
-    SELECT * FROM users WHERE username=${username}`;
+      if (is_chef) {
+        user = await this.sql`
+      SELECT * FROM chef_users WHERE username=${username}`;
+      } else {
+        user = await this.sql`
+        SELECT * FROM users WHERE username=${username}`;
+      }
       return user;
     } catch (error) {
       if (error instanceof HttpException)

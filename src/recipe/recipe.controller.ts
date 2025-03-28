@@ -7,9 +7,13 @@ import {
   Post,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 import { Recipe } from './model/recipe';
 import { RecipeService } from './recipe.service';
 
@@ -21,6 +25,8 @@ export class RecipeController {
     return this.recipeService.findAllRecipes(query);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(['chef'])
   @Post('/')
   @UseInterceptors(FileInterceptor('image'))
   async postRecipe(
@@ -40,7 +46,6 @@ export class RecipeController {
     )
     image: Express.Multer.File,
   ) {
-    console.log(image);
     return this.recipeService.addNewRecipe(body, image);
   }
 }

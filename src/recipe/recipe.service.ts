@@ -64,25 +64,24 @@ export class RecipeService {
       const recipes = await this.sql.unsafe(sqlQuery, queryParams);
       return recipes;
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      if (error instanceof HttpException)
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
 
   async addNewRecipe(recipe: Recipe, image: Express.Multer.File) {
-    console.log('🚀 ~ RecipeService ~ addNewRecipe ~ image:', image);
     const b64 = Buffer.from(image.buffer).toString('base64');
     const dataURI = 'data:' + image.mimetype + ';base64,' + b64;
     const cloudinaryRes = await handleUpload(dataURI);
-    console.log(cloudinaryRes);
     const { chef_id, cooking_time, description, labels, name } = recipe ?? {};
-    console.log(recipe);
     try {
       const newRecipe = await this.sql`
       INSERT INTO recipes (name, description, image_url, labels, chef_id, cooking_time)
       VALUES(${name}, ${description}, ${cloudinaryRes?.secure_url}, ${labels}, ${chef_id}, ${cooking_time}) RETURNING *`;
       return newRecipe;
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      if (error instanceof HttpException)
+        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
 }
