@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { handleUpload } from './fileUpload/cloudinary';
 import { Recipe } from './model/recipe';
 
 @Injectable()
@@ -67,14 +68,18 @@ export class RecipeService {
     }
   }
 
-  async addNewRecipe(recipe: Recipe) {
-    const { chef_id, cooking_time, description, image_url, labels, name } =
-      recipe ?? {};
-
+  async addNewRecipe(recipe: Recipe, image: Express.Multer.File) {
+    console.log('🚀 ~ RecipeService ~ addNewRecipe ~ image:', image);
+    const b64 = Buffer.from(image.buffer).toString('base64');
+    const dataURI = 'data:' + image.mimetype + ';base64,' + b64;
+    const cloudinaryRes = await handleUpload(dataURI);
+    console.log(cloudinaryRes);
+    const { chef_id, cooking_time, description, labels, name } = recipe ?? {};
+    console.log(recipe);
     try {
       const newRecipe = await this.sql`
       INSERT INTO recipes (name, description, image_url, labels, chef_id, cooking_time)
-      VALUES(${name}, ${description}, ${image_url}, ${labels}, ${chef_id}, ${cooking_time}) RETURNING *`;
+      VALUES(${name}, ${description}, ${cloudinaryRes?.secure_url}, ${labels}, ${chef_id}, ${cooking_time}) RETURNING *`;
       return newRecipe;
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
