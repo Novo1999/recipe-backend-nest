@@ -84,4 +84,25 @@ export class RecipeService {
         throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
+
+  async updateStatus(id: string, newStatus: 'draft' | 'published') {
+    try {
+      const update = await this.sql`
+        UPDATE recipes SET status = ${newStatus}
+        WHERE id = ${id} RETURNING *`;
+      return update;
+    } catch (error) {
+      if (error?.code === '23514') {
+        throw new HttpException(
+          'Invalid status value. Allowed values: draft, published.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      throw new HttpException(
+        'An error occurred while updating the status.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

@@ -3,7 +3,9 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Param,
   ParseFilePipeBuilder,
+  Patch,
   Post,
   Query,
   UploadedFile,
@@ -47,5 +49,15 @@ export class RecipeController {
     image: Express.Multer.File,
   ) {
     return this.recipeService.addNewRecipe(body, image);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(['chef'])
+  @Patch('/:id')
+  async updateRecipeStatus(
+    @Body() body: { status: 'draft' | 'published' },
+    @Param('id') id: string,
+  ) {
+    return this.recipeService.updateStatus(id, body.status);
   }
 }

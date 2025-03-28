@@ -18,13 +18,12 @@ export class RolesGuard implements CanActivate {
     }
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    console.log('🚀 ~ RolesGuard ~ canActivate ~ user:', user);
     if (roles.includes('chef') && user.is_chef) {
       return true;
     }
     throw new UnauthorizedException({
       success: false,
-      message: 'Only chef can create a recipe',
+      message: 'This action is for chefs only',
     });
   }
 }
