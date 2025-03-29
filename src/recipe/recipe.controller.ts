@@ -68,4 +68,14 @@ export class RecipeController {
   async addRecipeIngredients(@Body() body: Ingredient[]) {
     return this.recipeService.addIngredients(body);
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(['chef'])
+  @Patch('/ingredients/:id')
+  async updateRecipeIngredients(
+    @Body() body: Ingredient,
+    @Param('id') id: string,
+  ) {
+    return this.recipeService.updateIngredient(id, body);
+  }
 }

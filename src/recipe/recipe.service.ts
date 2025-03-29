@@ -78,8 +78,11 @@ export class RecipeService {
         Math.ceil((total[0]?.count || 0) / Number(limit)),
       );
     } catch (error) {
-      if (error instanceof HttpException)
-        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      if (error)
+        throw new HttpException(
+          'Error getting recipes',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
     }
   }
 
@@ -95,8 +98,11 @@ export class RecipeService {
       VALUES(${name}, ${description}, ${cloudinaryRes?.secure_url}, ${labels}, ${chef_id}, ${cooking_time}, ${status}) RETURNING *`;
       return newRecipe;
     } catch (error) {
-      if (error instanceof HttpException)
-        throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      if (error)
+        throw new HttpException(
+          'Failed to add recipe',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
     }
   }
 
@@ -148,8 +154,42 @@ export class RecipeService {
       }
       throw new HttpException(
         'Failed to add ingredient',
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  async updateIngredient(id: string, ingredient: Ingredient) {
+    const { name, quantity } = ingredient ?? {};
+    const conditions: string[] = [];
+    const queryParams: any[] = [];
+
+    let sqlQuery = 'UPDATE ingredients SET ';
+
+    if (ingredient.name) {
+      conditions.push(`name = $${queryParams.length + 1}`);
+      queryParams.push(name);
+    }
+    if (ingredient.quantity) {
+      conditions.push(`quantity = $${queryParams.length + 1}`);
+      queryParams.push(quantity);
+    }
+
+    if (conditions.length) {
+      sqlQuery += `${conditions.join(', ')}`;
+    }
+
+    sqlQuery += ` WHERE id = ${id} RETURNING *`;
+    console.log(sqlQuery);
+    try {
+      const update = await this.sql.unsafe(sqlQuery, queryParams);
+      return update;
+    } catch (error) {
+      if (error)
+        throw new HttpException(
+          'Failed to edit ingredient',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
     }
   }
 }
