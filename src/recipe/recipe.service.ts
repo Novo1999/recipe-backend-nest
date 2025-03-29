@@ -1,8 +1,8 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DataListResponse } from '../dto/DataListResponse';
-import { handleUpload } from './fileUpload/cloudinary';
 import { Ingredient } from './model/ingredient';
 import { Recipe } from './model/recipe';
+import getCloudinaryRes from './util/getCloudinaryRes';
 
 @Injectable()
 export class RecipeService {
@@ -87,9 +87,7 @@ export class RecipeService {
   }
 
   async addNewRecipe(recipe: Recipe, image: Express.Multer.File) {
-    const b64 = Buffer.from(image.buffer).toString('base64');
-    const dataURI = 'data:' + image.mimetype + ';base64,' + b64;
-    const cloudinaryRes = await handleUpload(dataURI);
+    const cloudinaryRes = await getCloudinaryRes(image);
     const { chef_id, cooking_time, description, labels, name, status } =
       recipe ?? {};
     try {
@@ -97,6 +95,38 @@ export class RecipeService {
       INSERT INTO recipes (name, description, image_url, labels, chef_id, cooking_time, status)
       VALUES(${name}, ${description}, ${cloudinaryRes?.secure_url}, ${labels}, ${chef_id}, ${cooking_time}, ${status}) RETURNING *`;
       return newRecipe;
+    } catch (error) {
+      if (error)
+        throw new HttpException(
+          'Failed to add recipe',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+    }
+  }
+  async updateRecipe(recipe: Recipe, image: Express.Multer.File, id: string) {
+    let imageUrl: string;
+    const {
+      chef_id,
+      cooking_time,
+      description,
+      image_url,
+      labels,
+      name,
+      status,
+    } = recipe ?? {};
+
+    if (image) {
+      const cloudinaryRes = await getCloudinaryRes(image);
+      imageUrl = cloudinaryRes.secure_url;
+    } else {
+      imageUrl = image_url;
+    }
+
+    try {
+      const update = await this.sql`
+      UPDATE recipes SET name = ${name}, description = ${description}, image_url = ${imageUrl}, labels = ${labels}, chef_id = ${chef_id}, cooking_time = ${cooking_time}, status = ${status} WHERE id = ${id}
+      RETURNING *`;
+      return update;
     } catch (error) {
       if (error)
         throw new HttpException(
@@ -180,7 +210,6 @@ export class RecipeService {
     }
 
     sqlQuery += ` WHERE id = ${id} RETURNING *`;
-    console.log(sqlQuery);
     try {
       const update = await this.sql.unsafe(sqlQuery, queryParams);
       return update;

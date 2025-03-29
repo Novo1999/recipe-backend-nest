@@ -7,6 +7,7 @@ import {
   ParseFilePipeBuilder,
   Patch,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseGuards,
@@ -50,6 +51,19 @@ export class RecipeController {
     image: Express.Multer.File,
   ) {
     return this.recipeService.addNewRecipe(body, image);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(['chef'])
+  @Put('/:id')
+  @UseInterceptors(FileInterceptor('image'))
+  async updateRecipe(
+    @Body() body: Recipe,
+    @UploadedFile()
+    image: Express.Multer.File,
+    @Param('id') id: string,
+  ) {
+    return this.recipeService.updateRecipe(body, image, id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
