@@ -16,6 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
+import { Ingredient } from './model/ingredient';
 import { Recipe } from './model/recipe';
 import { RecipeService } from './recipe.service';
 
@@ -59,5 +60,12 @@ export class RecipeController {
     @Param('id') id: string,
   ) {
     return this.recipeService.updateStatus(id, body.status);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(['chef'])
+  @Post('/ingredients')
+  async addRecipeIngredients(@Body() body: Ingredient[]) {
+    return this.recipeService.addIngredients(body);
   }
 }
