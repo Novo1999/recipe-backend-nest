@@ -20,6 +20,7 @@ export class RecipeService {
       cooking_time_start,
       cooking_time_end,
       status,
+      skill_level,
     } = query ?? {};
     const queryParams: any[] = [];
     let sqlQuery = 'SELECT * FROM recipes';
@@ -56,6 +57,11 @@ export class RecipeService {
       queryParams.push(status);
     }
 
+    if (skill_level) {
+      conditions.push(`skill_level = $${queryParams.length + 1}`);
+      queryParams.push(skill_level);
+    }
+
     if (conditions.length) {
       sqlQuery += ` WHERE ${conditions.join(' AND ')}`;
     }
@@ -88,12 +94,19 @@ export class RecipeService {
 
   async addNewRecipe(recipe: Recipe, image: Express.Multer.File) {
     const cloudinaryRes = await getCloudinaryRes(image);
-    const { chef_id, cooking_time, description, labels, name, status } =
-      recipe ?? {};
+    const {
+      chef_id,
+      cooking_time,
+      description,
+      labels,
+      name,
+      status,
+      skill_level,
+    } = recipe ?? {};
     try {
       const newRecipe = await this.sql`
-      INSERT INTO recipes (name, description, image_url, labels, chef_id, cooking_time, status)
-      VALUES(${name}, ${description}, ${cloudinaryRes?.secure_url}, ${labels}, ${chef_id}, ${cooking_time}, ${status}) RETURNING *`;
+      INSERT INTO recipes (name, description, image_url, labels, chef_id, cooking_time, status, skill_level)
+      VALUES(${name}, ${description}, ${cloudinaryRes?.secure_url}, ${labels}, ${chef_id}, ${cooking_time}, ${status}, ${skill_level}) RETURNING *`;
       return newRecipe;
     } catch (error) {
       if (error)
@@ -113,6 +126,7 @@ export class RecipeService {
       labels,
       name,
       status,
+      skill_level,
     } = recipe ?? {};
 
     if (image) {
@@ -124,13 +138,15 @@ export class RecipeService {
 
     try {
       const update = await this.sql`
-      UPDATE recipes SET name = ${name}, description = ${description}, image_url = ${imageUrl}, labels = ${labels}, chef_id = ${chef_id}, cooking_time = ${cooking_time}, status = ${status} WHERE id = ${id}
+      UPDATE recipes SET name = ${name}, description = ${description},
+      image_url = ${imageUrl}, labels = ${labels}, chef_id = ${chef_id},
+      cooking_time = ${cooking_time}, status = ${status}, skill_level = ${skill_level} WHERE id = ${id}
       RETURNING *`;
       return update;
     } catch (error) {
       if (error)
         throw new HttpException(
-          'Failed to add recipe',
+          'Failed to edit recipe',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
     }

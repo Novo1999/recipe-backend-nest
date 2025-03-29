@@ -9,4 +9,5 @@ export type Recipe = {
   status: 'draft' | 'published';
   createdAt: Date;
   updatedAt: Date;
+  skill_level: string;
 };
