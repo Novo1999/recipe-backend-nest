@@ -98,7 +98,11 @@ export class RecipeService {
       const recipe = await this.sql`
       SELECT * FROM recipes
       WHERE id = ${id}`;
-      return recipe[0] || null;
+      return (
+        recipe[0] || {
+          status: false,
+        }
+      );
     } catch (error) {
       if (error)
         throw new HttpException(
@@ -142,6 +146,25 @@ export class RecipeService {
         );
     }
   }
+
+  async deleteRecipe(id: string) {
+    try {
+      const result = await this.sql`
+      DELETE FROM recipes
+      WHERE id = ${id}
+      RETURNING *`;
+      return {
+        status: !!result.length,
+      };
+    } catch (error) {
+      if (error)
+        throw new HttpException(
+          error.response || 'Failed to delete recipe',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+    }
+  }
+
   async updateRecipe(recipe: Recipe, image: Express.Multer.File, id: string) {
     let imageUrl: string;
     const {
@@ -301,6 +324,44 @@ export class RecipeService {
       if (error)
         throw new HttpException(
           error.detail || 'Failed to add steps',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+    }
+  }
+
+  async getSteps(id: string) {
+    try {
+      const steps = await this.sql`
+      SELECT * FROM steps
+      WHERE id = ${id}`;
+      return (
+        steps[0] || {
+          status: false,
+        }
+      );
+    } catch (error) {
+      if (error)
+        throw new HttpException(
+          error.detail || 'Failed to get steps',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+    }
+  }
+
+  async updateSteps(id: string, steps: Steps) {
+    const formattedSteps = `{${steps.steps.map((step) => `"${step}"`).join(',')}}`;
+
+    try {
+      const update = await this.sql`
+      UPDATE steps SET steps = ${formattedSteps}::TEXT[] 
+      WHERE id = ${id} RETURNING *`;
+      return {
+        status: !!update.length,
+      };
+    } catch (error) {
+      if (error)
+        throw new HttpException(
+          error.detail || 'Failed to edit steps',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
     }

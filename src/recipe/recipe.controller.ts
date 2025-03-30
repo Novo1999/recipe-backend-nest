@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Param,
@@ -74,6 +75,13 @@ export class RecipeController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(['chef'])
+  @Delete('/:id')
+  async deleteRecipe(@Param('id') id: string) {
+    return this.recipeService.deleteRecipe(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(['chef'])
   @Patch('/:id')
   async updateRecipeStatus(
     @Body() body: { status: 'draft' | 'published' },
@@ -109,5 +117,17 @@ export class RecipeController {
   @Post('/steps')
   async addRecipeSteps(@Body() body: Steps) {
     return this.recipeService.addSteps(body);
+  }
+
+  @Get('/steps/:id')
+  async getRecipeSteps(@Param('id') id: string) {
+    return this.recipeService.getSteps(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(['chef'])
+  @Put('/steps/:recipe_id')
+  async updateRecipeSteps(@Body() body: Steps, @Param('recipe_id') id: string) {
+    return this.recipeService.updateSteps(id, body);
   }
 }
