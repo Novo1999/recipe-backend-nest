@@ -19,6 +19,7 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Ingredient } from './model/ingredient';
 import { Recipe } from './model/recipe';
+import { Steps } from './model/steps';
 import { RecipeService } from './recipe.service';
 
 @Controller('recipes')
@@ -27,6 +28,11 @@ export class RecipeController {
   @Get('/')
   async getAllRecipes(@Query() query: Record<string, string>) {
     return this.recipeService.findAllRecipes(query);
+  }
+
+  @Get('/:id')
+  async getRecipe(@Param('id') id: string) {
+    return this.recipeService.findRecipe(id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -76,6 +82,11 @@ export class RecipeController {
     return this.recipeService.updateStatus(id, body.status);
   }
 
+  @Get('/ingredients/:id')
+  async getRecipeIngredient(@Param('id') id: string) {
+    return this.recipeService.getIngredient(id);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(['chef'])
   @Post('/ingredients')
@@ -91,5 +102,12 @@ export class RecipeController {
     @Param('id') id: string,
   ) {
     return this.recipeService.updateIngredient(id, body);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(['chef'])
+  @Post('/steps')
+  async addRecipeSteps(@Body() body: Steps) {
+    return this.recipeService.addSteps(body);
   }
 }

@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DataListResponse } from '../dto/DataListResponse';
 import { Ingredient } from './model/ingredient';
 import { Recipe } from './model/recipe';
+import { Steps } from './model/steps';
 import getCloudinaryRes from './util/getCloudinaryRes';
 
 @Injectable()
@@ -92,6 +93,21 @@ export class RecipeService {
     }
   }
 
+  async findRecipe(id: string) {
+    try {
+      const recipe = await this.sql`
+      SELECT * FROM recipes
+      WHERE id = ${id}`;
+      return recipe[0] || null;
+    } catch (error) {
+      if (error)
+        throw new HttpException(
+          'Failed to get recipe',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+    }
+  }
+
   async addNewRecipe(recipe: Recipe, image: Express.Multer.File) {
     const cloudinaryRes = await getCloudinaryRes(image);
     const {
@@ -104,6 +120,16 @@ export class RecipeService {
       skill_level,
     } = recipe ?? {};
     try {
+      // check if label exists in table
+      const labelsCount = await this.sql`
+      SELECT COUNT(*) FROM labels WHERE id = ANY(${labels})`;
+
+      if (Number(labelsCount[0].count) === 0)
+        throw new HttpException(
+          'One or multiple labels does not exist, Please add valid labels',
+          HttpStatus.BAD_REQUEST,
+        );
+
       const newRecipe = await this.sql`
       INSERT INTO recipes (name, description, image_url, labels, chef_id, cooking_time, status, skill_level)
       VALUES(${name}, ${description}, ${cloudinaryRes?.secure_url}, ${labels}, ${chef_id}, ${cooking_time}, ${status}, ${skill_level}) RETURNING *`;
@@ -111,7 +137,7 @@ export class RecipeService {
     } catch (error) {
       if (error)
         throw new HttpException(
-          'Failed to add recipe',
+          error.response || 'Failed to add recipe',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
     }
@@ -128,6 +154,16 @@ export class RecipeService {
       status,
       skill_level,
     } = recipe ?? {};
+
+    // check if label exists in table
+    const labelsCount = await this.sql`
+         SELECT COUNT(*) FROM labels WHERE id = ANY(${labels})`;
+
+    if (Number(labelsCount[0].count) === 0)
+      throw new HttpException(
+        'One or multiple labels does not exist, Please add valid labels',
+        HttpStatus.BAD_REQUEST,
+      );
 
     if (image) {
       const cloudinaryRes = await getCloudinaryRes(image);
@@ -146,7 +182,7 @@ export class RecipeService {
     } catch (error) {
       if (error)
         throw new HttpException(
-          'Failed to edit recipe',
+          error.response || 'Failed to edit recipe',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
     }
@@ -170,6 +206,21 @@ export class RecipeService {
         'An error occurred while updating the status.',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  async getIngredient(recipeId: string) {
+    try {
+      const ingredient = await this.sql`
+      SELECT * FROM ingredients
+      WHERE recipe_id = ${recipeId}`;
+      return ingredient;
+    } catch (error) {
+      if (error)
+        throw new HttpException(
+          'Failed to get ingredients',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
     }
   }
 
@@ -233,6 +284,23 @@ export class RecipeService {
       if (error)
         throw new HttpException(
           'Failed to edit ingredient',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+    }
+  }
+
+  async addSteps(steps: Steps) {
+    const formattedSteps = `{${steps.steps.map((step) => `"${step}"`).join(',')}}`;
+    try {
+      const recipes = await this.sql`
+      INSERT INTO steps (recipe_id, steps) 
+      VALUES(${steps.recipe_id}, ${formattedSteps}::TEXT[])
+      RETURNING *`;
+      return recipes;
+    } catch (error) {
+      if (error)
+        throw new HttpException(
+          error.detail || 'Failed to add steps',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
     }
