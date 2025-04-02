@@ -104,10 +104,10 @@ export class RecipeController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(['chef'])
-  @Patch('/ingredients/:id')
+  @Patch('/ingredients/:recipe_id')
   async updateRecipeIngredients(
     @Body() body: Ingredient,
-    @Param('id') id: string,
+    @Param('recipe_id') id: string,
   ) {
     return this.recipeService.updateIngredient(id, body);
   }
@@ -120,7 +120,7 @@ export class RecipeController {
   }
 
   @Get('/steps/:id')
-  async getRecipeSteps(@Param('id') id: string) {
+  async getRecipeSteps(@Param('recipe_id') id: string) {
     return this.recipeService.getSteps(id);
   }
 

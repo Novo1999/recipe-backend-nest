@@ -329,11 +329,11 @@ export class RecipeService {
     }
   }
 
-  async getSteps(id: string) {
+  async getSteps(recipeId: string) {
     try {
       const steps = await this.sql`
       SELECT * FROM steps
-      WHERE id = ${id}`;
+      WHERE recipe_id = ${recipeId}`;
       return (
         steps[0] || {
           status: false,
